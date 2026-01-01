@@ -1,54 +1,23 @@
-require('dotenv').config();
-// console.log('DB_HOST:', process.env.DB_HOST);
-// console.log('DB_USER:', process.env.DB_USER);
-// console.log('DB_PASSWORD:', process.env.DB_PASSWORD ? '***' : '(empty)');
-// console.log('DB_NAME:', process.env.DB_NAME);
-
 const express = require('express');
 const cors = require('cors');
-const mysql = require('mysql2');
 const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 8005;
+const PORT = process.env.PORT || 1000;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Menu data file
+// Data files
 const MENU_FILE = path.join(__dirname, 'menu.json');
+const ORDERS_FILE = path.join(__dirname, 'orders.json');
 
-/* =========================
-   MySQL CONNECTION POOL
-   ========================= */
-const db = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT || 3306,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
-// Test DB connection once
-db.getConnection((err, connection) => {
-    if (err) {
-        console.error('❌ MySQL connection failed:', err.message);
-    } else {
-        console.log('✅ Connected to MySQL database');
-        connection.release();
-    }
-});
-
-/* =========================
-   INITIALIZE MENU FILE
-   ========================= */
-const initializeMenu = async () => {
+// Initialize files
+const initializeFiles = async () => {
     try {
+        // Create menu file if it doesn't exist
         await fs.access(MENU_FILE);
     } catch {
         const initialMenu = {
@@ -93,111 +62,247 @@ const initializeMenu = async () => {
             ]
         };
         await fs.writeFile(MENU_FILE, JSON.stringify(initialMenu, null, 2));
+        console.log('✅ Menu file created');
+    }
+    
+    try {
+        // Create orders file if it doesn't exist
+        await fs.access(ORDERS_FILE);
+    } catch {
+        await fs.writeFile(ORDERS_FILE, JSON.stringify([], null, 2));
+        console.log('✅ Orders file created');
     }
 };
 
-/* =========================
-   ROUTES
-   ========================= */
-
-// Get menu
+// Get all menu items
 app.get('/api/menu', async (req, res) => {
     try {
         const data = await fs.readFile(MENU_FILE, 'utf8');
-        res.json(JSON.parse(data));
-    } catch (err) {
+        const menu = JSON.parse(data);
+        res.json(menu);
+    } catch (error) {
+        console.error('Error reading menu:', error);
         res.status(500).json({ error: 'Failed to load menu' });
     }
 });
 
-// Place order
-app.post('/api/order', (req, res) => {
-    const order = req.body;
-    const orderId = 'SER' + Date.now();
-
-    const sql = `
-        INSERT INTO orders
-        (order_id, customer_name, phone, city, address, pickup_time, items, total_amount)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `;
-
-    const values = [
-        orderId,
-        order.name,
-        order.phone,
-        order.city,
-        order.location,
-        order.pickupTime || '30 minutes',
-        JSON.stringify(order.items),
-        order.total
-    ];
-
-    db.query(sql, values, (err, result) => {
-        if (err) {
-            console.error('❌ Order insert failed:', err);
-            return res.status(500).json({
-                success: false,
-                error: 'Database error'
-            });
+// Submit order (SAVES TO JSON FILE)
+app.post('/api/order', async (req, res) => {
+    console.log('📦 Received order:', req.body);
+    
+    try {
+        const order = req.body;
+        const orderId = 'SER' + Date.now();
+        
+        // Read existing orders
+        let orders = [];
+        try {
+            const ordersData = await fs.readFile(ORDERS_FILE, 'utf8');
+            orders = JSON.parse(ordersData);
+        } catch (error) {
+            console.log('Starting new orders file');
         }
-
-        res.json({
-            success: true,
-            message: 'Order placed successfully!',
-            orderId
+        
+        // Create new order object
+        const newOrder = {
+            id: orders.length + 1,
+            order_id: orderId,
+            customer_name: order.name,
+            phone: order.phone,
+            city: order.city,
+            address: order.location,
+            pickup_time: order.pickupTime || '30 minutes',
+            items: order.items,
+            total_amount: order.total,
+            status: 'received',
+            order_date: new Date().toISOString()
+        };
+        
+        // Add to orders array
+        orders.push(newOrder);
+        
+        // Save to file
+        await fs.writeFile(ORDERS_FILE, JSON.stringify(orders, null, 2));
+        
+        console.log('✅ Order saved to JSON file. ID:', orderId);
+        
+        res.json({ 
+            success: true, 
+            message: 'Order received successfully!', 
+            orderId: orderId
         });
-    });
+        
+    } catch (error) {
+        console.error('❌ Server error:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Server error: ' + error.message 
+        });
+    }
 });
 
-// Get all orders
-app.get('/api/orders', (req, res) => {
-    db.query(
-        'SELECT * FROM orders ORDER BY order_date DESC LIMIT 50',
-        (err, results) => {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to fetch orders' });
-            }
+// Get all orders (for admin view)
+app.get('/api/orders', async (req, res) => {
+    try {
+        const ordersData = await fs.readFile(ORDERS_FILE, 'utf8');
+        const orders = JSON.parse(ordersData);
+        
+        // Return latest 50 orders
+        const recentOrders = orders.slice(-50).reverse();
+        
+        res.json(recentOrders);
+    } catch (error) {
+        console.error('Error reading orders:', error);
+        res.status(500).json({ error: 'Failed to load orders' });
+    }
+});
 
-            results.forEach(o => {
-                try {
-                    o.items = JSON.parse(o.items);
-                } catch {
-                    o.items = [];
-                }
-            });
-
-            res.json(results);
+// Get order by ID
+app.get('/api/orders/:id', async (req, res) => {
+    try {
+        const ordersData = await fs.readFile(ORDERS_FILE, 'utf8');
+        const orders = JSON.parse(ordersData);
+        
+        const order = orders.find(o => 
+            o.order_id === req.params.id || 
+            o.id.toString() === req.params.id
+        );
+        
+        if (!order) {
+            res.status(404).json({ error: 'Order not found' });
+            return;
         }
-    );
+        
+        res.json(order);
+    } catch (error) {
+        console.error('Error reading order:', error);
+        res.status(500).json({ error: 'Failed to load order' });
+    }
 });
 
 // Update order status
-app.put('/api/orders/:id/status', (req, res) => {
-    const sql = 'UPDATE orders SET status = ? WHERE order_id = ? OR id = ?';
-
-    db.query(sql, [req.body.status, req.params.id, req.params.id], err => {
-        if (err) {
-            return res.status(500).json({ error: 'Failed to update status' });
+app.put('/api/orders/:id/status', async (req, res) => {
+    try {
+        const { status } = req.body;
+        const ordersData = await fs.readFile(ORDERS_FILE, 'utf8');
+        let orders = JSON.parse(ordersData);
+        
+        const orderIndex = orders.findIndex(o => 
+            o.order_id === req.params.id || 
+            o.id.toString() === req.params.id
+        );
+        
+        if (orderIndex === -1) {
+            res.status(404).json({ error: 'Order not found' });
+            return;
         }
-        res.json({ success: true });
-    });
+        
+        // Update status
+        orders[orderIndex].status = status;
+        
+        // Save updated orders
+        await fs.writeFile(ORDERS_FILE, JSON.stringify(orders, null, 2));
+        
+        res.json({ success: true, message: 'Order status updated' });
+    } catch (error) {
+        console.error('Error updating order:', error);
+        res.status(500).json({ error: 'Failed to update order' });
+    }
 });
 
-// Cities
+// Get order statistics
+app.get('/api/orders/stats', async (req, res) => {
+    try {
+        const ordersData = await fs.readFile(ORDERS_FILE, 'utf8');
+        const orders = JSON.parse(ordersData);
+        
+        if (orders.length === 0) {
+            res.json({
+                total_orders: 0,
+                total_revenue: 0,
+                avg_order_value: 0
+            });
+            return;
+        }
+        
+        const totalOrders = orders.length;
+        const totalRevenue = orders.reduce((sum, order) => sum + order.total_amount, 0);
+        const avgOrderValue = totalRevenue / totalOrders;
+        
+        // Group by status
+        const statusCounts = {};
+        const cityCounts = {};
+        
+        orders.forEach(order => {
+            statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
+            cityCounts[order.city] = (cityCounts[order.city] || 0) + 1;
+        });
+        
+        res.json({
+            total_orders: totalOrders,
+            total_revenue: totalRevenue,
+            avg_order_value: avgOrderValue,
+            status_counts: statusCounts,
+            city_counts: cityCounts
+        });
+    } catch (error) {
+        console.error('Error reading orders stats:', error);
+        res.status(500).json({ error: 'Failed to load statistics' });
+    }
+});
+
+// Get cities for dropdown
 app.get('/api/cities', (req, res) => {
-    res.json([
+    const cities = [
         { id: 1, name: "Bhairahawa" },
         { id: 2, name: "Kathmandu" },
         { id: 3, name: "Pokhara" },
         { id: 4, name: "Mustang" },
         { id: 5, name: "Butwal" }
-    ]);
+    ];
+    res.json(cities);
 });
 
-/* =========================
-   START SERVER
-   ========================= */
+// Export orders to CSV
+app.get('/api/orders/export/csv', async (req, res) => {
+    try {
+        const ordersData = await fs.readFile(ORDERS_FILE, 'utf8');
+        const orders = JSON.parse(ordersData);
+        
+        let csv = 'Order ID,Customer Name,Phone,City,Total Amount,Status,Order Date\n';
+        
+        orders.forEach(order => {
+            const itemsText = order.items.map(item => 
+                `${item.name} (x${item.quantity})`
+            ).join('; ');
+            
+            csv += `"${order.order_id}","${order.customer_name}","${order.phone}","${order.city}","${itemsText}",${order.total_amount},"${order.status}","${order.order_date}"\n`;
+        });
+        
+        res.header('Content-Type', 'text/csv');
+        res.attachment('serados_orders.csv');
+        res.send(csv);
+    } catch (error) {
+        console.error('Error exporting CSV:', error);
+        res.status(500).json({ error: 'Failed to export data' });
+    }
+});
+
+// Serve admin pages
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+app.get('/admin-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Start server
 app.listen(PORT, async () => {
-    await initializeMenu();
-    console.log(`🚀 Server running on port ${PORT}`);
+    await initializeFiles();
+    console.log(`🚀 Serados Cafe Server running on http://localhost:${PORT}`);
+    console.log(`📝 Orders are saved to: orders.json`);
+    console.log(`📋 Menu is loaded from: menu.json`);
+    console.log(`📞 Orders API: http://localhost:${PORT}/api/order`);
+    console.log(`👨‍💼 Admin Panel: http://localhost:${PORT}/admin`);
 });
