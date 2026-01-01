@@ -262,9 +262,11 @@ document.addEventListener('DOMContentLoaded', function() {
         totalPriceElement.textContent = total.toFixed(2);
     }
     
-    // Handle form submission
+    // Handle form submission - ONLY ONE HANDLER
     orderForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        
+        console.log('📦 Form submission started...');
         
         if (cart.length === 0) {
             alert('Please add items to your order.');
@@ -295,11 +297,19 @@ document.addEventListener('DOMContentLoaded', function() {
             location: location,
             pickupTime: pickupTime === 'custom' ? customTime : `${pickupTime} minutes from now`,
             items: cart,
-            total: parseFloat(totalPriceElement.textContent),
-            timestamp: new Date().toISOString()
+            total: parseFloat(totalPriceElement.textContent)
         };
         
+        console.log('📤 Sending order data:', orderData);
+        
+        // Show loading state
+        const submitBtn = orderForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Processing...';
+        submitBtn.disabled = true;
+        
         try {
+            console.log('🌐 Calling API: /api/order');
             const response = await fetch('/api/order', {
                 method: 'POST',
                 headers: {
@@ -308,11 +318,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify(orderData)
             });
             
+            console.log('📥 API Response status:', response.status);
+            
             const result = await response.json();
+            console.log('📥 API Response data:', result);
             
             if (result.success) {
                 // Show success message
-                alert(`Order placed successfully!\n\nOrder ID: ${result.orderId}\nCity: ${city}\nTotal: रु ${orderData.total.toFixed(2)}\n\nWe will call you at ${phone} for confirmation.`);
+                alert(`✅ Order placed successfully!\n\nOrder ID: ${result.orderId}\nCity: ${city}\nTotal: रु ${orderData.total.toFixed(2)}\n\nWe will call you at ${phone} for confirmation.`);
                 
                 // Reset form
                 orderForm.reset();
@@ -328,11 +341,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     cb.checked = false;
                 });
             } else {
-                alert('Failed to place order. Please try again.');
+                alert(`❌ Failed to place order: ${result.error || 'Unknown error'}`);
             }
         } catch (error) {
-            console.error('Error placing order:', error);
-            alert('Error placing order. Please try again or call us directly.');
+            console.error('❌ Error placing order:', error);
+            alert('❌ Error placing order. Please try again or call us directly.');
+        } finally {
+            // Reset button
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
     });
     
@@ -356,6 +373,111 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+    
+    // Admin panel functions
+    async function viewAllOrders() {
+        try {
+            const response = await fetch('/api/orders');
+            const orders = await response.json();
+            
+            if (orders.length === 0) {
+                alert('No orders found yet!');
+                return;
+            }
+            
+            const ordersHTML = `
+                <div style="font-family: Arial, sans-serif; padding: 20px; background: white; color: black;">
+                    <h1 style="color: #333;">📊 Serados Cafe - Order Management</h1>
+                    <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+                        <p><strong>Total Orders:</strong> ${orders.length}</p>
+                    </div>
+                    ${orders.map(order => `
+                        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
+                            <h3 style="margin-top: 0;">Order #${order.order_id}</h3>
+                            <p><strong>Customer:</strong> ${order.customer_name}</p>
+                            <p><strong>Phone:</strong> ${order.phone}</p>
+                            <p><strong>City:</strong> ${order.city}</p>
+                            <p><strong>Address:</strong> ${order.address}</p>
+                            <p><strong>Items:</strong></p>
+                            <ul>
+                                ${order.items.map(item => `<li>${item.name} (x${item.quantity}) - रु ${item.price * item.quantity}</li>`).join('')}
+                            </ul>
+                            <p><strong>Total:</strong> रु ${order.total_amount}</p>
+                            <p><strong>Status:</strong> 
+                                <select onchange="updateOrderStatus('${order.order_id}', this.value)" style="padding: 5px;">
+                                    <option value="received" ${order.status === 'received' ? 'selected' : ''}>📥 Received</option>
+                                    <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>👨‍🍳 Preparing</option>
+                                    <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>✅ Ready for Pickup</option>
+                                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>🎉 Completed</option>
+                                </select>
+                            </p>
+                            <p><strong>Order Date:</strong> ${new Date(order.order_date).toLocaleString()}</p>
+                        </div>
+                    `).join('')}
+                    <button onclick="window.print()" style="padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">🖨️ Print Orders</button>
+                </div>
+            `;
+            
+            const win = window.open('', '_blank');
+            win.document.write(ordersHTML);
+            
+        } catch (error) {
+            console.error('Error fetching orders:', error);
+            alert('Failed to load orders. Please check console for details.');
+        }
+    }
+    
+    // Update order status
+    async function updateOrderStatus(orderId, status) {
+        try {
+            const response = await fetch(`/api/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ status })
+            });
+            
+            const result = await response.json();
+            if (result.success) {
+                alert('Order status updated!');
+                viewAllOrders(); // Refresh
+            } else {
+                alert('Error: ' + result.error);
+            }
+        } catch (error) {
+            console.error('Error updating order:', error);
+            alert('Failed to update order status');
+        }
+    }
+    
+    // Add admin button to page
+    function addAdminButton() {
+        const adminBtn = document.createElement('button');
+        adminBtn.innerHTML = '📊 Admin';
+        adminBtn.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2e8b57;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            font-weight: bold;
+            font-size: 14px;
+        `;
+        adminBtn.onclick = viewAllOrders;
+        document.body.appendChild(adminBtn);
+    }
+    
+    // Add admin button for testing
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        addAdminButton();
+    }
     
     // Add some style for no data
     const style = document.createElement('style');
