@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 1009;
+const PORT = process.env.PORT || 1000;
 
 app.use(cors());
 app.use(express.json());
@@ -16,11 +16,11 @@ const MENU_FILE = path.join(__dirname, 'menu.json');
 
 // MySQL Database Connection - UPDATE THESE CREDENTIALS
 const db = mysql.createConnection({
-    host: 'localhost',          // Usually localhost
+    host: 'mysql.railway.internal',          // Usually localhost
     user: 'root',              // XAMPP default
-    password: '',              // XAMPP default is empty
+    password: 'vgSkkdNwMcNhcWdBhPVrAjpxJwVCizCl',              // XAMPP default is empty
     port: 3306,                // Default MySQL port
-    database: 'serados_cafe_db' // We'll create this
+    database: 'railway' // We'll create this
 });
 
 // Connect to MySQL
