@@ -15,7 +15,7 @@ app.use(express.static('public'));
 const MENU_FILE = path.join(__dirname, 'menu.json');
 
 // MySQL Database Connection - UPDATE THESE CREDENTIALS
-const db = mysql.createConnection({
+const db = mysql2.createConnection({
     host: 'interchange.proxy.rlwy.net',          // Usually localhost
     user: 'root',              // XAMPP default
     password: 'hvcxZqbvKAeXanerVIrYVHUvrzYsdCtB',              // XAMPP default is empty
@@ -425,3 +425,4 @@ app.get('/admin', (req, res) => {
 app.get('/admin-dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
+
