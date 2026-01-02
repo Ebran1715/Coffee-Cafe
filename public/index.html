@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serados Cafe - Nepal</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="logo">SERADOS CAFE</a>
+            <ul class="nav-links">
+                <li><a href="#home">Home</a></li>
+                <li><a href="#menu">Menu</a></li>
+                <li><a href="#order">Order Online</a></li>
+                <li><a href="#about">About Us</a></li>
+            </ul>
+            <button class="menu-toggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1>Welcome to Serados Cafe</h1>
+            <p>Authentic Nepali flavors served across Nepal</p>
+            <a href="#menu" class="btn">View Our Menu</a>
+        </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section id="menu" class="section">
+        <div class="container">
+            <h2 class="section-title">Our Menu</h2>
+            <div id="menu-container" class="menu-grid">
+                <!-- Menu items loaded dynamically -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Order Section -->
+    <section id="order" class="section bg-light">
+        <div class="container">
+            <h2 class="section-title">Order Online</h2>
+            <div class="order-container">
+                <div class="order-form">
+                    <h3>Place Your Order</h3>
+                    <form id="order-form">
+                        <div class="form-group">
+                            <label for="name">Full Name *</label>
+                            <input type="text" id="name" required placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">Phone Number *</label>
+                            <input type="tel" id="phone" required placeholder="Enter your phone number">
+                        </div>
+                        <div class="form-group">
+                            <label for="city">Select City *</label>
+                            <select id="city" required>
+                                <option value="">Choose your city</option>
+                                <option value="Bhairahawa">Bhairahawa</option>
+                                <option value="Kathmandu">Kathmandu</option>
+                                <option value="Pokhara">Pokhara</option>
+                                <option value="Mustang">Mustang</option>
+                                <option value="Butwal">Butwal</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="location">Delivery Address *</label>
+                            <input type="text" id="location" required placeholder="Enter your full address">
+                        </div>
+                        <div class="form-group">
+                            <label for="pickup-time">Preferred Pickup Time *</label>
+                            <select id="pickup-time" required>
+                                <option value="">Select pickup time</option>
+                                <option value="30">30 minutes from now</option>
+                                <option value="45">45 minutes from now</option>
+                                <option value="60">1 hour from now</option>
+                                <option value="90">1.5 hours from now</option>
+                                <option value="120">2 hours from now</option>
+                                <option value="custom">Custom time</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="custom-time-group" style="display: none;">
+                            <label for="custom-time">Custom Time</label>
+                            <input type="text" id="custom-time" placeholder="Enter custom pickup time">
+                        </div>
+                        <div class="form-group">
+                            <label>Select Items</label>
+                            <div id="items-container">
+                                <!-- Items loaded dynamically -->
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Place Order</button>
+                    </form>
+                </div>
+                <div class="order-summary">
+                    <h3>Order Summary</h3>
+                    <div id="order-items"></div>
+                    <div class="total">
+                        <strong>Total: रु <span id="total-price">0.00</span></strong>
+                    </div>
+                    <div class="delivery-note">
+                        <small><i class="fas fa-info-circle"></i> Available in Bhairahawa, Kathmandu, Pokhara, Mustang & Butwal</small>
+                    </div>
+                    <div class="pickup-info">
+                        <h4><i class="fas fa-clock"></i> Service Hours</h4>
+                        <p>Bhairahawa & Butwal: 7 AM - 9 PM</p>
+                        <p>Kathmandu: 6:30 AM - 10 PM</p>
+                        <p>Pokhara: 6 AM - 10 PM</p>
+                        <p>Mustang: 8 AM - 8 PM</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="section">
+        <div class="container">
+            <h2 class="section-title">About Serados Cafe</h2>
+            <div class="about-content">
+                <div class="about-text">
+                    <h3>Our Story</h3>
+                    <p>Founded in 2025, Serados Cafe brings authentic Nepali flavors to cities across Nepal. We combine traditional recipes with modern café culture.</p>
+                    
+                    <h3>Our Locations</h3>
+                    <p>We serve customers in five major cities across Nepal:</p>
+                    <ul class="location-list">
+                        <li><strong>Bhairahawa:</strong> Siddhartha Highway, Ward No. 1</li>
+                        <li><strong>Kathmandu:</strong> Thamel, Kathmandu</li>
+                        <li><strong>Pokhara:</strong> Lakeside Road, Pokhara</li>
+                        <li><strong>Mustang:</strong> Jomsom, Mustang</li>
+                        <li><strong>Butwal:</strong> Tilottama Road, Butwal</li>
+                    </ul>
+                    
+                    <h3>Our Commitment</h3>
+                    <p>We use locally sourced ingredients and support Nepali farmers. Every cup of coffee and every dish tells a story of our beautiful country.</p>
+                </div>
+                <div class="about-stats">
+                    <div class="stat">
+                        <h4>5</h4>
+                        <p>Cities in Nepal</p>
+                    </div>
+                    <div class="stat">
+                        <h4>50+</h4>
+                        <p>Menu Items</p>
+                    </div>
+                    <div class="stat">
+                        <h4>100%</h4>
+                        <p>Local Ingredients</p>
+                    </div>
+                    <div class="stat">
+                        <h4>8 Years</h4>
+                        <p>Experience</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>SERADOS CAFE</h3>
+                    <p>Serving authentic Nepali flavors across Nepal since 2025.</p>
+                    <p class="nepali-text">नेपालभरि स्वादिष्ट कफी र स्थानीय व्यञ्जनहरू</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Head Office</h4>
+                    <p><i class="fas fa-map-marker-alt"></i> Siddhartha Highway, Bhairahawa</p>
+                    <p><i class="fas fa-phone"></i> +977 9824479744</p>
+                    <p><i class="fas fa-envelope"></i> info@seradoscafe.com</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Our Cities</h4>
+                    <p>Bhairahawa • Kathmandu • Pokhara • Mustang • Butwal</p>
+                    <div class="city-tags">
+                        <span>Bhairahawa</span>
+                        <span>Kathmandu</span>
+                        <span>Pokhara</span>
+                        <span>Mustang</span>
+                        <span>Butwal</span>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Follow Us</h4>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-tiktok"></i></a>
+                        <a href="#"><i class="fab fa-whatsapp"></i></a>
+                    </div>
+                    <div class="payment-methods">
+                        <small>We accept:</small>
+                        <div class="payment-icons">
+                            <i class="fas fa-credit-card"></i>
+                            <i class="fas fa-money-bill-wave"></i>
+                            <i class="fab fa-fonepay"></i>
+                            <i class="fab fa-esewa"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="copyright">© 2025 Serados Cafe, Nepal. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

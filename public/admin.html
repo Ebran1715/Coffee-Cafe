@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serados Cafe - Admin Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .login-container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        
+        .logo {
+            color: #2e8b57;
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .logo i {
+            font-size: 40px;
+        }
+        
+        h2 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+        
+        input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            border-color: #2e8b57;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(46, 139, 87, 0.1);
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #2e8b57, #32cd32);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(46, 139, 87, 0.3);
+        }
+        
+        .error {
+            color: #ff4757;
+            margin-top: 15px;
+            padding: 12px;
+            background: #ffeaea;
+            border-radius: 6px;
+            border-left: 4px solid #ff4757;
+            display: none;
+        }
+        
+        .back-link {
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .back-link a {
+            color: #2e8b57;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .admin-only {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #999;
+            font-size: 14px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <i class="fas fa-mug-hot"></i>
+            SERADOS CAFE
+        </div>
+        
+        <h2>Admin Login</h2>
+        
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username">
+                    <i class="fas fa-user"></i> Username
+                </label>
+                <input type="text" id="username" placeholder="Enter admin username" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">
+                    <i class="fas fa-key"></i> Password
+                </label>
+                <input type="password" id="password" placeholder="Enter admin password" required>
+            </div>
+            
+            <button type="submit" class="login-btn">
+                <i class="fas fa-sign-in-alt"></i> Login to Dashboard
+            </button>
+            
+            <div id="errorMessage" class="error">
+                <i class="fas fa-exclamation-circle"></i>
+                Invalid username or password
+            </div>
+        </form>
+        
+        <div class="back-link">
+            <a href="/">
+                <i class="fas fa-arrow-left"></i> Back to Main Website
+            </a>
+        </div>
+        
+        <div class="admin-only">
+            <i class="fas fa-shield-alt"></i> For authorized personnel only
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Default credentials
+            if (username === 'admin' && password === 'Ebran@1715') {
+                // Store login status in sessionStorage
+                sessionStorage.setItem('seradosAdminLoggedIn', 'true');
+                sessionStorage.setItem('seradosAdminUser', username);
+                
+                // Redirect to admin dashboard
+                window.location.href = '/admin-dashboard.html';
+            } else {
+                // Show error
+                document.getElementById('errorMessage').style.display = 'block';
+                
+                // Clear password field
+                document.getElementById('password').value = '';
+                document.getElementById('password').focus();
+            }
+        });
+        
+        // Check if already logged in
+        if (sessionStorage.getItem('seradosAdminLoggedIn') === 'true') {
+            window.location.href = '/admin-dashboard.html';
+        }
+        
+        // Focus on username field
+        document.getElementById('username').focus();
+    </script>
+</body>
+</html>
