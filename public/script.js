@@ -374,109 +374,68 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Admin panel functions
-    async function viewAllOrders() {
-        try {
-            const response = await fetch('/api/orders');
-            const orders = await response.json();
+    // =============================================
+    // SINGLE ADMIN BUTTON (PASSWORD PROTECTED)
+    // =============================================
+    
+    // Create a single admin button (shown only on localhost)
+    if (window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('192.168')) {
+        
+        // Wait a bit for page to load
+        setTimeout(() => {
+            const adminBtn = document.createElement('button');
+            adminBtn.id = 'single-admin-btn';
+            adminBtn.innerHTML = '🛡️ Admin';
+            adminBtn.title = 'Admin Dashboard - Password Protected';
             
-            if (orders.length === 0) {
-                alert('No orders found yet!');
-                return;
-            }
-            
-            const ordersHTML = `
-                <div style="font-family: Arial, sans-serif; padding: 20px; background: white; color: black;">
-                    <h1 style="color: #333;">📊 Serados Cafe - Order Management</h1>
-                    <div style="background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-                        <p><strong>Total Orders:</strong> ${orders.length}</p>
-                    </div>
-                    ${orders.map(order => `
-                        <div style="border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 5px;">
-                            <h3 style="margin-top: 0;">Order #${order.order_id}</h3>
-                            <p><strong>Customer:</strong> ${order.customer_name}</p>
-                            <p><strong>Phone:</strong> ${order.phone}</p>
-                            <p><strong>City:</strong> ${order.city}</p>
-                            <p><strong>Address:</strong> ${order.address}</p>
-                            <p><strong>Items:</strong></p>
-                            <ul>
-                                ${order.items.map(item => `<li>${item.name} (x${item.quantity}) - रु ${item.price * item.quantity}</li>`).join('')}
-                            </ul>
-                            <p><strong>Total:</strong> रु ${order.total_amount}</p>
-                            <p><strong>Status:</strong> 
-                                <select onchange="updateOrderStatus('${order.order_id}', this.value)" style="padding: 5px;">
-                                    <option value="received" ${order.status === 'received' ? 'selected' : ''}>📥 Received</option>
-                                    <option value="preparing" ${order.status === 'preparing' ? 'selected' : ''}>👨‍🍳 Preparing</option>
-                                    <option value="ready" ${order.status === 'ready' ? 'selected' : ''}>✅ Ready for Pickup</option>
-                                    <option value="completed" ${order.status === 'completed' ? 'selected' : ''}>🎉 Completed</option>
-                                </select>
-                            </p>
-                            <p><strong>Order Date:</strong> ${new Date(order.order_date).toLocaleString()}</p>
-                        </div>
-                    `).join('')}
-                    <button onclick="window.print()" style="padding: 10px 20px; background: #333; color: white; border: none; border-radius: 5px; cursor: pointer;">🖨️ Print Orders</button>
-                </div>
+            // Style the button
+            adminBtn.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: linear-gradient(135deg, #2e8b57, #32cd32);
+                color: white;
+                border: none;
+                padding: 12px 20px;
+                border-radius: 50px;
+                cursor: pointer;
+                z-index: 9999;
+                box-shadow: 0 4px 12px rgba(46, 139, 87, 0.4);
+                font-weight: bold;
+                font-size: 14px;
+                transition: all 0.3s ease;
+                border: 2px solid white;
             `;
             
-            const win = window.open('', '_blank');
-            win.document.write(ordersHTML);
-            
-        } catch (error) {
-            console.error('Error fetching orders:', error);
-            alert('Failed to load orders. Please check console for details.');
-        }
-    }
-    
-    // Update order status
-    async function updateOrderStatus(orderId, status) {
-        try {
-            const response = await fetch(`/api/orders/${orderId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ status })
+            // Add hover effects
+            adminBtn.addEventListener('mouseenter', () => {
+                adminBtn.style.transform = 'scale(1.05)';
+                adminBtn.style.boxShadow = '0 6px 16px rgba(46, 139, 87, 0.6)';
             });
             
-            const result = await response.json();
-            if (result.success) {
-                alert('Order status updated!');
-                viewAllOrders(); // Refresh
-            } else {
-                alert('Error: ' + result.error);
-            }
-        } catch (error) {
-            console.error('Error updating order:', error);
-            alert('Failed to update order status');
-        }
-    }
-    
-    // Add admin button to page
-    function addAdminButton() {
-        const adminBtn = document.createElement('button');
-        adminBtn.innerHTML = '📊 Admin';
-        adminBtn.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: #2e8b57;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            cursor: pointer;
-            z-index: 9999;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            font-weight: bold;
-            font-size: 14px;
-        `;
-        adminBtn.onclick = viewAllOrders;
-        document.body.appendChild(adminBtn);
-    }
-    
-    // Add admin button for testing
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        addAdminButton();
+            adminBtn.addEventListener('mouseleave', () => {
+                adminBtn.style.transform = 'scale(1)';
+                adminBtn.style.boxShadow = '0 4px 12px rgba(46, 139, 87, 0.4)';
+            });
+            
+            // Click handler - Ask for password
+            adminBtn.addEventListener('click', () => {
+                const password = prompt('🔐 Enter Admin Password:');
+                
+                if (password === 'serados123') {
+                    // Correct password - open admin page
+                    window.open('/admin-dashboard.html', '_blank');
+                } else if (password !== null) {
+                    // Wrong password (but user didn't cancel)
+                    alert('❌ Incorrect password!');
+                }
+            });
+            
+            // Add button to page
+            document.body.appendChild(adminBtn);
+        }, 1000);
     }
     
     // Add some style for no data
@@ -498,6 +457,17 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         .category-heading h4 {
             margin: 0;
+        }
+        
+        /* Admin button animation */
+        @keyframes adminPulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 139, 87, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(46, 139, 87, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 139, 87, 0); }
+        }
+        
+        #single-admin-btn {
+            animation: adminPulse 2s infinite;
         }
     `;
     document.head.appendChild(style);
