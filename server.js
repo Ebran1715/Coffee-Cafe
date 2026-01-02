@@ -16,7 +16,7 @@ const MENU_FILE = path.join(__dirname, 'menu.json');
 
 // MySQL Database Connection - UPDATE THESE CREDENTIALS
 const db = mysql.createConnection({
-    host: 'mysql.railway.internal',          // Usually localhost
+    host: 'mysql://root:vgSkkdNwMcNhcWdBhPVrAjpxJwVCizCl@shinkansen.proxy.rlwy.net:22078/railwayl',          // Usually localhost
     user: 'root',              // XAMPP default
     password: 'vgSkkdNwMcNhcWdBhPVrAjpxJwVCizCl',              // XAMPP default is empty
     port: 3306,                // Default MySQL port
@@ -426,3 +426,4 @@ app.get('/admin', (req, res) => {
 app.get('/admin-dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
+
