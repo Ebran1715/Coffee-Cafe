@@ -252,20 +252,44 @@ app.get('/api/orders/:id', (req, res) => {
 });
 
 // Update order status
-app.put('/api/orders/:id/status', (req, res) => {
-    const { status } = req.body;
-    const sql = 'UPDATE orders SET status = ? WHERE order_id = ? OR id = ?';
-    
-    db.query(sql, [status, req.params.id, req.params.id], (err, result) => {
-        if (err) {
-            console.error('Error updating order status:', err);
-            res.status(500).json({ error: 'Failed to update order status' });
-            return;
-        }
-        
-        res.json({ success: true, message: 'Order status updated' });
+// ✅ Update order status (ALLOW BACKWARD CHANGE)
+app.put('/api/orders/:orderId/status', (req, res) => {
+  const { orderId } = req.params;
+  const { status } = req.body;
+
+  const allowed = ['received', 'preparing', 'ready', 'completed'];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Invalid status'
     });
+  }
+
+  const sql = `UPDATE orders SET status=? WHERE order_id=?`;
+
+  db.query(sql, [status, orderId], (err, result) => {
+    if (err) {
+      console.error('❌ Status update error:', err);
+      return res.status(500).json({
+        success: false,
+        message: 'Database error'
+      });
+    }
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Order status updated'
+    });
+  });
 });
+
 
 // Get order statistics
 app.get('/api/orders/stats', (req, res) => {
@@ -425,6 +449,7 @@ app.get('/admin', (req, res) => {
 app.get('/admin-dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
+
 
 
 
