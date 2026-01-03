@@ -597,4 +597,64 @@ body {
 }
 
 
+/* Add these styles to your existing CSS */
+
+/* Track Order Button in Navigation */
+.track-btn {
+    background: linear-gradient(135deg, #2e8b57, #32cd32);
+    color: white !important;
+    padding: 8px 20px !important;
+    border-radius: 25px;
+    font-weight: bold;
+    margin-left: 10px;
+    transition: all 0.3s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.track-btn:hover {
+    background: linear-gradient(135deg, #237d4c, #28a428);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+}
+
+/* Mobile responsiveness for the button */
+@media (max-width: 768px) {
+    .nav-links .track-btn {
+        margin: 10px 0;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding: 10px !important;
+    }
+}
+
+/* If you want a floating track button on the page as well */
+.floating-track-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    background: linear-gradient(135deg, #2e8b57, #32cd32);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    box-shadow: 0 4px 15px rgba(46, 139, 87, 0.4);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
 
