@@ -14,21 +14,22 @@ app.use(express.static('public'));
 // Menu data file
 const MENU_FILE = path.join(__dirname, 'menu.json');
 
-// MySQL Database Connection - UPDATE THESE CREDENTIALS
+// MySQL Database Connection - Railway credentials
 const db = mysql2.createConnection({
-    host: 'interchange.proxy.rlwy.net',          // Usually localhost
-    user: 'root',              // XAMPP default
-    password: 'hvcxZqbvKAeXanerVIrYVHUvrzYsdCtB',              // XAMPP default is empty
-    port:18319,                // Default MySQL port
-    database: 'railway' // We'll create this
+    host: 'interchange.proxy.rlwy.net',
+    user: 'root',
+    password: 'hvcxZqbvKAeXanerVIrYVHUvrzYsdCtB',
+    port: 18319,
+    database: 'railway'
 });
+
 // Connect to MySQL2
 db.connect((err) => {
     if (err) {
         console.error('❌ Error connecting to MySQL2:', err.message);
         console.log('Please check:');
-        console.log('1. Is XAMPP MySQL2 running?');
-        console.log('2. Port 3306 is free?');
+        console.log('1. Database server is running');
+        console.log('2. Port 18319 is accessible');
         console.log('3. Username/password correct?');
         return;
     }
@@ -38,47 +39,31 @@ db.connect((err) => {
 
 // Create database and tables if they don't exist
 function initializeDatabase() {
-    // Create database
-    db.query('CREATE DATABASE IF NOT EXISTS railway', (err) => {
+    // Note: Railway already creates the database, so we just need to ensure tables exist
+    
+    // Create orders table
+    const createOrdersTable = `
+        CREATE TABLE IF NOT EXISTS orders (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            order_id VARCHAR(50) UNIQUE,
+            customer_name VARCHAR(100) NOT NULL,
+            phone VARCHAR(20) NOT NULL,
+            city VARCHAR(50) NOT NULL,
+            address TEXT NOT NULL,
+            pickup_time VARCHAR(50),
+            items TEXT NOT NULL,
+            total_amount DECIMAL(10, 2) NOT NULL,
+            status ENUM('received', 'preparing', 'ready', 'completed') DEFAULT 'received',
+            order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `;
+    
+    db.query(createOrdersTable, (err) => {
         if (err) {
-            console.error('Error creating database:', err);
-            return;
+            console.error('❌ Error creating orders table:', err);
+        } else {
+            console.log('✅ Orders table ready');
         }
-        
-        console.log('✅ Database ready');
-        
-        // Use the database
-        db.changeUser({ database: 'railway' }, (err) => {
-            if (err) {
-                console.error('Error switching database:', err);
-                return;
-            }
-            
-            // Create orders table
-            const createOrdersTable = `
-                CREATE TABLE IF NOT EXISTS orders (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    order_id VARCHAR(50) UNIQUE,
-                    customer_name VARCHAR(100) NOT NULL,
-                    phone VARCHAR(20) NOT NULL,
-                    city VARCHAR(50) NOT NULL,
-                    address TEXT NOT NULL,
-                    pickup_time VARCHAR(50),
-                    items TEXT NOT NULL,
-                    total_amount DECIMAL(10, 2) NOT NULL,
-                    status ENUM('received', 'preparing', 'ready', 'completed') DEFAULT 'received',
-                    order_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                )
-            `;
-            
-            db.query(createOrdersTable, (err) => {
-                if (err) {
-                    console.error('❌ Error creating orders table:', err);
-                } else {
-                    console.log('✅ Orders table ready');
-                }
-            });
-        });
     });
 }
 
@@ -252,44 +237,42 @@ app.get('/api/orders/:id', (req, res) => {
 });
 
 // Update order status
-// ✅ Update order status (ALLOW BACKWARD CHANGE)
 app.put('/api/orders/:orderId/status', (req, res) => {
-  const { orderId } = req.params;
-  const { status } = req.body;
+    const { orderId } = req.params;
+    const { status } = req.body;
 
-  const allowed = ['received', 'preparing', 'ready', 'completed'];
-  if (!allowed.includes(status)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Invalid status'
-    });
-  }
-
-  const sql = `UPDATE orders SET status=? WHERE order_id=?`;
-
-  db.query(sql, [status, orderId], (err, result) => {
-    if (err) {
-      console.error('❌ Status update error:', err);
-      return res.status(500).json({
-        success: false,
-        message: 'Database error'
-      });
+    const allowed = ['received', 'preparing', 'ready', 'completed'];
+    if (!allowed.includes(status)) {
+        return res.status(400).json({
+            success: false,
+            message: 'Invalid status'
+        });
     }
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        success: false,
-        message: 'Order not found'
-      });
-    }
+    const sql = `UPDATE orders SET status=? WHERE order_id=?`;
 
-    res.json({
-      success: true,
-      message: 'Order status updated'
+    db.query(sql, [status, orderId], (err, result) => {
+        if (err) {
+            console.error('❌ Status update error:', err);
+            return res.status(500).json({
+                success: false,
+                message: 'Database error'
+            });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Order status updated'
+        });
     });
-  });
 });
-
 
 // Get order statistics
 app.get('/api/orders/stats', (req, res) => {
@@ -328,29 +311,145 @@ app.get('/api/cities', (req, res) => {
     res.json(cities);
 });
 
-// Start server
-app.listen(PORT, async () => {
-    await initializeMenu();
-    console.log(`🚀 Serados Cafe Server running on http://localhost:${PORT}`);
-    console.log(`📊 Using MySQL2 database: railway`);
-    console.log(`📞 Orders API: http://localhost:${PORT}/api/order`);
+// =============================================
+// ORDER TRACKING SYSTEM ENDPOINTS
+// =============================================
+
+// Get order status by order ID (customer tracking)
+app.get('/api/track-order/:orderId', (req, res) => {
+    const orderId = req.params.orderId;
+    const sql = 'SELECT order_id, status, order_date FROM orders WHERE order_id = ?';
+    
+    db.query(sql, [orderId], (err, results) => {
+        if (err) {
+            console.error('Error fetching order status:', err);
+            res.status(500).json({ error: 'Failed to fetch order status' });
+            return;
+        }
+        
+        if (results.length === 0) {
+            res.status(404).json({ error: 'Order not found' });
+            return;
+        }
+        
+        const order = results[0];
+        res.json({
+            order_id: order.order_id,
+            status: order.status,
+            order_date: order.order_date,
+            status_text: getStatusText(order.status)
+        });
+    });
 });
 
+// Helper function to get status text
+function getStatusText(status) {
+    const statusMap = {
+        'received': 'Order Received - We have received your order',
+        'preparing': 'Preparing - Your order is being prepared',
+        'ready': 'Ready for Pickup - Your order is ready for pickup',
+        'completed': 'Completed - Order has been picked up'
+    };
+    return statusMap[status] || 'Unknown Status';
+}
 
-
-
-
-// Simple admin authentication middleware
-const checkAdmin = (req, res, next) => {
-    // In production, use proper authentication like JWT
-    const token = req.headers['x-admin-token'];
+// Get detailed order info for tracking page
+app.get('/api/track-order-details/:orderId', (req, res) => {
+    const orderId = req.params.orderId;
+    const sql = 'SELECT * FROM orders WHERE order_id = ?';
     
-    if (token === 'serados-admin-token') {
-        next();
-    } else {
-        res.status(401).json({ error: 'Unauthorized' });
-    }
-};
+    db.query(sql, [orderId], (err, results) => {
+        if (err) {
+            console.error('Error fetching order details:', err);
+            res.status(500).json({ error: 'Failed to fetch order details' });
+            return;
+        }
+        
+        if (results.length === 0) {
+            res.status(404).json({ error: 'Order not found' });
+            return;
+        }
+        
+        const order = results[0];
+        try {
+            order.items = JSON.parse(order.items);
+        } catch (e) {
+            order.items = [];
+        }
+        
+        // Add status timeline
+        order.status_timeline = getStatusTimeline(order.status, order.order_date);
+        
+        res.json(order);
+    });
+});
+
+// Helper function to create status timeline
+function getStatusTimeline(currentStatus, orderDate) {
+    const timeline = [
+        {
+            status: 'received',
+            title: 'Order Received',
+            description: 'We have received your order',
+            completed: true,
+            active: currentStatus === 'received',
+            time: new Date(orderDate).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        },
+        {
+            status: 'preparing',
+            title: 'Preparing',
+            description: 'Your order is being prepared',
+            completed: ['preparing', 'ready', 'completed'].includes(currentStatus),
+            active: currentStatus === 'preparing',
+            time: null
+        },
+        {
+            status: 'ready',
+            title: 'Ready for Pickup',
+            description: 'Your order is ready for pickup',
+            completed: ['ready', 'completed'].includes(currentStatus),
+            active: currentStatus === 'ready',
+            time: null
+        },
+        {
+            status: 'completed',
+            title: 'Completed',
+            description: 'Order has been picked up',
+            completed: currentStatus === 'completed',
+            active: currentStatus === 'completed',
+            time: null
+        }
+    ];
+    
+    return timeline;
+}
+
+// Get order status updates (for real-time polling)
+app.get('/api/order-status/:orderId', (req, res) => {
+    const orderId = req.params.orderId;
+    const sql = 'SELECT status FROM orders WHERE order_id = ?';
+    
+    db.query(sql, [orderId], (err, results) => {
+        if (err) {
+            res.status(500).json({ error: 'Database error' });
+            return;
+        }
+        
+        if (results.length === 0) {
+            res.status(404).json({ error: 'Order not found' });
+            return;
+        }
+        
+        res.json({
+            status: results[0].status,
+            updated_at: new Date().toISOString()
+        });
+    });
+});
+
+// =============================================
+// ADMIN ENDPOINTS
+// =============================================
 
 // Get today's orders
 app.get('/api/orders/today', (req, res) => {
@@ -427,18 +526,14 @@ app.get('/api/orders/revenue/daily', (req, res) => {
     });
 });
 
-// Serve admin pages
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+// =============================================
+// PAGE ROUTES
+// =============================================
+
+// Serve order tracking page
+app.get('/track-order', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'track-order.html'));
 });
-
-app.get('/admin-dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
-});
-
-
-
-
 
 // Serve admin login page
 app.get('/admin', (req, res) => {
@@ -446,11 +541,45 @@ app.get('/admin', (req, res) => {
 });
 
 // Serve admin dashboard
+app.get('/admin-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
+});
+
+// Serve admin dashboard (alternative route)
 app.get('/admin-dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
 
+// Serve index page for all other routes
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
+// =============================================
+// ADMIN AUTHENTICATION MIDDLEWARE
+// =============================================
 
+const checkAdmin = (req, res, next) => {
+    // In production, use proper authentication like JWT
+    const token = req.headers['x-admin-token'];
+    
+    if (token === 'serados-admin-token') {
+        next();
+    } else {
+        res.status(401).json({ error: 'Unauthorized' });
+    }
+};
 
+// =============================================
+// START SERVER
+// =============================================
 
+app.listen(PORT, async () => {
+    await initializeMenu();
+    console.log(`🚀 Serados Cafe Server running on port: ${PORT}`);
+    console.log(`📊 Using MySQL2 database: railway`);
+    console.log(`📞 Orders API: /api/order`);
+    console.log(`📋 Order Tracking: /track-order`);
+    console.log(`🛡️ Admin Dashboard: /admin-dashboard`);
+    console.log(`🏠 Website: http://localhost:${PORT}`);
+});
