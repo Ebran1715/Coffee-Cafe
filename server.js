@@ -308,7 +308,7 @@ app.get('/api/cities', (req, res) => {
 app.listen(PORT, async () => {
     await initializeMenu();
     console.log(`🚀 Serados Cafe Server running on http://localhost:${PORT}`);
-    console.log(`📊 Using MySQL2 database: serados_cafe_db`);
+    console.log(`📊 Using MySQL2 database: railway`);
     console.log(`📞 Orders API: http://localhost:${PORT}/api/order`);
 });
 
@@ -425,5 +425,6 @@ app.get('/admin', (req, res) => {
 app.get('/admin-dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
+
 
 
