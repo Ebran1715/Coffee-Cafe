@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 1005;
+const PORT = process.env.PORT || 10000;
 
 app.use(cors());
 app.use(express.json());
@@ -425,6 +425,7 @@ app.get('/admin', (req, res) => {
 app.get('/admin-dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
+
 
 
 
