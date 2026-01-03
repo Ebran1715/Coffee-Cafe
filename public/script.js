@@ -471,4 +471,70 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     `;
     document.head.appendChild(style);
+
+});
+
+
+
+// Add this function to your existing JavaScript code
+function addTrackOrderButton() {
+    // Add to navigation
+    const navLinks = document.querySelector('.nav-links');
+    if (navLinks) {
+        // Check if button already exists
+        if (!document.querySelector('.nav-track-btn')) {
+            const trackLink = document.createElement('li');
+            trackLink.innerHTML = `
+                <a href="/track-order" class="nav-track-btn track-btn">
+                    <i class="fas fa-search-location"></i> Track Your Order
+                </a>
+            `;
+            navLinks.appendChild(trackLink);
+        }
+    }
+    
+    // Also add a floating button at bottom of page
+    if (!document.querySelector('.floating-track-btn')) {
+        const floatingBtn = document.createElement('a');
+        floatingBtn.href = '/track-order';
+        floatingBtn.className = 'floating-track-btn';
+        floatingBtn.innerHTML = `
+            <i class="fas fa-search-location"></i> Track Order
+        `;
+        floatingBtn.style.cssText = `
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #2e8b57, #32cd32);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(46, 139, 87, 0.4);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        `;
+        document.body.appendChild(floatingBtn);
+    }
+}
+
+// Call this function when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Your existing code...
+    
+    // Add track order button after a short delay
+    setTimeout(addTrackOrderButton, 500);
+    
+    // Also add to mobile menu toggle if needed
+    const menuToggle = document.querySelector('.menu-toggle');
+    if (menuToggle) {
+        menuToggle.addEventListener('click', function() {
+            // Re-add button if it was removed in mobile view
+            setTimeout(addTrackOrderButton, 100);
+        });
+    }
 });
