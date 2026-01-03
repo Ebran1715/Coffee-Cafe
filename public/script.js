@@ -492,6 +492,27 @@ function addTrackOrderButton() {
             navLinks.appendChild(trackLink);
         }
     }
+
+
+    / You can show this in a modal or custom alert
+showCustomAlert(confirmationHTML);
+
+// Add this function to your existing JavaScript code
+function addTrackOrderButton() {
+    // Add to navigation
+    const navLinks = document.querySelector('.nav-links');
+    if (navLinks) {
+        // Check if button already exists
+        if (!document.querySelector('.nav-track-btn')) {
+            const trackLink = document.createElement('li');
+            trackLink.innerHTML = `
+                <a href="/track-order" class="nav-track-btn track-btn">
+                    <i class="fas fa-search-location"></i> Track Your Order
+                </a>
+            `;
+            navLinks.appendChild(trackLink);
+        }
+    }
     
     // Also add a floating button at bottom of page
     if (!document.querySelector('.floating-track-btn')) {
@@ -538,3 +559,4 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
