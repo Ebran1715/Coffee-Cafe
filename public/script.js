@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize
     loadMenu();
     setupEventListeners();
+    addTrackOrderButton(); // Add track order button
     
     // Setup event listeners
     function setupEventListeners() {
@@ -324,8 +325,11 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('📥 API Response data:', result);
             
             if (result.success) {
-                // Show success message
-                alert(`✅ Order placed successfully!\n\nOrder ID: ${result.orderId}\nCity: ${city}\nTotal: रु ${orderData.total.toFixed(2)}\n\nWe will call you at ${phone} for confirmation.`);
+                // Show success message WITH TRACKING LINK
+                const trackURL = `${window.location.origin}/track-order`;
+                const successMessage = `✅ Order placed successfully!\n\nOrder ID: ${result.orderId}\nCity: ${city}\nTotal: रु ${orderData.total.toFixed(2)}\n\nWe will call you at ${phone} for confirmation.\n\nTrack your order status at:\n${trackURL}\n\nYour Order ID: ${result.orderId}`;
+                
+                alert(successMessage);
                 
                 // Reset form
                 orderForm.reset();
@@ -469,35 +473,69 @@ document.addEventListener('DOMContentLoaded', function() {
         #single-admin-btn {
             animation: adminPulse 2s infinite;
         }
+        
+        /* Track button styles */
+        .track-btn {
+            background: linear-gradient(135deg, #2e8b57, #32cd32);
+            color: white !important;
+            padding: 8px 20px !important;
+            border-radius: 25px;
+            font-weight: bold;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+        }
+        
+        .track-btn:hover {
+            background: linear-gradient(135deg, #237d4c, #28a428);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(46, 139, 87, 0.3);
+        }
+        
+        /* Mobile responsiveness for the button */
+        @media (max-width: 768px) {
+            .nav-links .track-btn {
+                margin: 10px 0;
+                display: flex;
+                justify-content: center;
+                width: 100%;
+                padding: 10px !important;
+            }
+        }
+        
+        /* Floating track button */
+        .floating-track-btn {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            background: linear-gradient(135deg, #2e8b57, #32cd32);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(46, 139, 87, 0.4);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
     `;
     document.head.appendChild(style);
-
 });
 
-
-
-// Add this function to your existing JavaScript code
-function addTrackOrderButton() {
-    // Add to navigation
-    const navLinks = document.querySelector('.nav-links');
-    if (navLinks) {
-        // Check if button already exists
-        if (!document.querySelector('.nav-track-btn')) {
-            const trackLink = document.createElement('li');
-            trackLink.innerHTML = `
-                <a href="/track-order" class="nav-track-btn track-btn">
-                    <i class="fas fa-search-location"></i> Track Your Order
-                </a>
-            `;
-            navLinks.appendChild(trackLink);
-        }
-    }
-
-
-    / You can show this in a modal or custom alert
-showCustomAlert(confirmationHTML);
-
-// Add this function to your existing JavaScript code
+// Function to add track order button to navigation
 function addTrackOrderButton() {
     // Add to navigation
     const navLinks = document.querySelector('.nav-links');
@@ -514,8 +552,8 @@ function addTrackOrderButton() {
         }
     }
     
-    // Also add a floating button at bottom of page
-    if (!document.querySelector('.floating-track-btn')) {
+    // Also add a floating button at bottom of page (optional)
+    if (!document.querySelector('.floating-track-btn') && false) { // Set to false if you don't want floating button
         const floatingBtn = document.createElement('a');
         floatingBtn.href = '/track-order';
         floatingBtn.className = 'floating-track-btn';
@@ -543,20 +581,48 @@ function addTrackOrderButton() {
     }
 }
 
-// Call this function when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    // Your existing code...
+// Custom modal function (if you want to use it)
+function showCustomModal(content) {
+    // Remove existing modal if any
+    const existingModal = document.querySelector('.custom-modal');
+    if (existingModal) existingModal.remove();
     
-    // Add track order button after a short delay
-    setTimeout(addTrackOrderButton, 500);
+    // Create modal
+    const modal = document.createElement('div');
+    modal.className = 'custom-modal';
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    `;
     
-    // Also add to mobile menu toggle if needed
-    const menuToggle = document.querySelector('.menu-toggle');
-    if (menuToggle) {
-        menuToggle.addEventListener('click', function() {
-            // Re-add button if it was removed in mobile view
-            setTimeout(addTrackOrderButton, 100);
-        });
-    }
-});
-
+    const modalContent = document.createElement('div');
+    modalContent.style.cssText = `
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    `;
+    
+    modalContent.innerHTML = content;
+    modal.appendChild(modalContent);
+    document.body.appendChild(modal);
+    
+    // Close modal when clicking outside
+    modal.addEventListener('click', function(e) {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+}
