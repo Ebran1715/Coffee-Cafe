@@ -271,12 +271,13 @@
         
         <!-- Filter Controls -->
         <div class="controls">
-            <button class="filter-btn active" onclick="filterOrders('all')">All Orders</button>
-            <button class="filter-btn" onclick="filterOrders('received')">Received</button>
-            <button class="filter-btn" onclick="filterOrders('preparing')">Preparing</button>
-            <button class="filter-btn" onclick="filterOrders('ready')">Ready</button>
-            <button class="filter-btn" onclick="filterOrders('completed')">Completed</button>
-            <button class="filter-btn" onclick="filterOrders('today')">Today</button>
+            <button class="filter-btn active" onclick="filterOrders(event, 'all')">All Orders</button>
+<button class="filter-btn" onclick="filterOrders(event, 'received')">Received</button>
+<button class="filter-btn" onclick="filterOrders(event, 'preparing')">Preparing</button>
+<button class="filter-btn" onclick="filterOrders(event, 'ready')">Ready</button>
+<button class="filter-btn" onclick="filterOrders(event, 'completed')">Completed</button>
+<button class="filter-btn" onclick="filterOrders(event, 'today')">Today</button>
+
         </div>
         
         <!-- Orders Table -->
@@ -415,7 +416,8 @@
         }
         
         // Filter orders
-        function filterOrders(filterType) {
+   function filterOrders(event, filterType) {
+
             currentFilter = filterType;
             
             // Update active button
@@ -648,4 +650,5 @@
         }, 30000);
     </script>
 </body>
+
 </html>
