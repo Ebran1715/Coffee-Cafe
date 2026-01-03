@@ -39,7 +39,7 @@ db.connect((err) => {
 // Create database and tables if they don't exist
 function initializeDatabase() {
     // Create database
-    db.query('CREATE DATABASE IF NOT EXISTS serados_cafe_db', (err) => {
+    db.query('CREATE DATABASE IF NOT EXISTS railway', (err) => {
         if (err) {
             console.error('Error creating database:', err);
             return;
@@ -48,7 +48,7 @@ function initializeDatabase() {
         console.log('✅ Database ready');
         
         // Use the database
-        db.changeUser({ database: 'serados_cafe_db' }, (err) => {
+        db.changeUser({ database: 'railway' }, (err) => {
             if (err) {
                 console.error('Error switching database:', err);
                 return;
@@ -425,4 +425,5 @@ app.get('/admin', (req, res) => {
 app.get('/admin-dashboard.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-dashboard.html'));
 });
+
 
